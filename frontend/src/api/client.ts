@@ -68,7 +68,25 @@ export function useApi() {
         body: JSON.stringify(payload),
       }),
     rules: () => call<{ rules: any[] }>('/v1/rules'),
-    history: () => call<{ items: any[] }>('/v1/history'),
+    history: (params?: {
+      dialect?: string;
+      ok?: boolean;
+      page?: number;
+      pageSize?: number;
+    }) => {
+      const qs = new URLSearchParams();
+      if (params?.dialect) qs.set('dialect', params.dialect);
+      if (typeof params?.ok === 'boolean') qs.set('ok', String(params.ok));
+      if (params?.page) qs.set('page', String(params.page));
+      if (params?.pageSize) qs.set('pageSize', String(params.pageSize));
+      const suffix = qs.toString() ? `?${qs.toString()}` : '';
+      return call<{
+        items: any[];
+        total: number;
+        page: number;
+        pageSize: number;
+      }>(`/v1/history${suffix}`);
+    },
     historyDetail: (id: string) => call<any>(`/v1/history/${id}`),
     fixtures: () => call<{ fixtures: any[] }>('/v1/fixtures'),
   };

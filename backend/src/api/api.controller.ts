@@ -5,11 +5,13 @@ import {
   NotFoundException,
   Param,
   Post,
+  Query,
 } from '@nestjs/common';
 import { RuleEngineService } from '../rule-engine/rule-engine.service';
 import { ReportService } from '../report/report.service';
 import { HistoryService } from '../history/history.service';
 import { AnalyzeDto } from './analyze.dto';
+import { HistoryQueryDto } from './history-query.dto';
 import { CurrentUser, Roles } from '../auth/auth.guard';
 import { AuthUser } from '../auth/auth.store';
 import { FIXTURES } from './fixtures';
@@ -36,10 +38,15 @@ export class ApiController {
   }
 
   @Get('history')
-  async listHistory() {
-    const rows = await this.history.list();
+  async listHistory(@Query() query: HistoryQueryDto) {
+    const { items, total, page, pageSize } = await this.history.list({
+      dialect: query.dialect,
+      ok: query.ok === undefined ? undefined : query.ok === 'true',
+      page: query.page,
+      pageSize: query.pageSize,
+    });
     return {
-      items: rows.map((r) => ({
+      items: items.map((r) => ({
         id: r.id,
         sqlSummary: r.sqlSummary,
         dialect: r.dialect,
@@ -50,6 +57,9 @@ export class ApiController {
           ? (r.findingsJson as unknown[]).length
           : 0,
       })),
+      total,
+      page,
+      pageSize,
     };
   }
 
